@@ -1,6 +1,6 @@
 
 https://github.com/user-attachments/assets/7997cb21-6b3a-4c88-9004-305ca7d84ec5
-# Research Discovery Platform MVP
+# Research Discovery Platform 
 
 A professional web application that helps researchers discover relevant academic papers by analyzing Google Scholar profiles and generating AI-powered recommendations.
 
