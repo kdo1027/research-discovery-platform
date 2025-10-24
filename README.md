@@ -6,18 +6,18 @@ A professional web application that helps researchers discover relevant academic
 
 ## Features
 
-### 🔍 Profile Analysis
+### Profile Analysis
 - Paste any Google Scholar profile URL to analyze a researcher's work
 - View comprehensive research areas and topics
 - Get AI-generated summaries of research focus
 
-### 📚 Smart Paper Recommendations
+### Smart Paper Recommendations
 - AI-powered paper suggestions based on research profile
 - Detailed information, including title, authors, venue, year, and abstract
 - Relevance scores with reasoning for each recommendation
 - Direct links to papers and Google Scholar
 
-### ✉️ Email Generation
+### Email Generation
 - One-click email template generation for contacting paper authors
 - Customizable sender information (name and affiliation)
 - Professional, personalized outreach messages
