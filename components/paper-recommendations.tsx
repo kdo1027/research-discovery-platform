@@ -13,6 +13,7 @@ interface Paper {
   authors: string[]
   venue: string
   year: number
+  keywords: string[]
   abstract: string
   relevanceScore: number
   relevanceReason: string
@@ -31,6 +32,7 @@ const SAMPLE_PAPERS: Paper[] = [
     authors: ["John Smith", "Emily Johnson", "Michael Brown"],
     venue: "NeurIPS",
     year: 2024,
+    keywords: ["Transformers", "Attention Mechanisms", "Deep Learning", "Neural Architectures", "NLP"],
     abstract:
       "This paper presents a comprehensive survey of transformer architectures and their applications across various domains. We analyze the evolution of attention mechanisms from the original Transformer model to modern variants like GPT, BERT, and Vision Transformers. Our analysis covers architectural innovations, training strategies, and performance benchmarks across language understanding, generation, and multimodal tasks.",
     relevanceScore: 95,
@@ -44,6 +46,7 @@ const SAMPLE_PAPERS: Paper[] = [
     authors: ["Sarah Williams", "David Lee", "Anna Martinez"],
     venue: "ICML",
     year: 2024,
+    keywords: ["Few-Shot Learning", "Meta-Learning", "Transfer Learning", "Low-Resource NLP", "Model Efficiency"],
     abstract:
       "We explore the challenges of few-shot learning in resource-constrained settings and propose novel approaches to improve model performance with limited training data. Our method combines meta-learning with efficient fine-tuning strategies, achieving state-of-the-art results on benchmark datasets while reducing computational requirements by 60%. We demonstrate applications in medical imaging, endangered language processing, and scientific literature analysis.",
     relevanceScore: 92,
@@ -57,6 +60,7 @@ const SAMPLE_PAPERS: Paper[] = [
     authors: ["Robert Taylor", "Lisa Anderson", "James Wilson"],
     venue: "ACL",
     year: 2024,
+    keywords: ["AI Ethics", "Bias Mitigation", "Responsible AI", "Fairness", "LLM Deployment"],
     abstract:
       "This work examines the ethical implications of deploying large language models at scale, focusing on bias mitigation, fairness, and responsible AI practices. We present a framework for evaluating model outputs across demographic groups and propose technical interventions to reduce harmful biases. Our study includes case studies from real-world deployments and provides actionable guidelines for practitioners.",
     relevanceScore: 88,
@@ -70,6 +74,7 @@ const SAMPLE_PAPERS: Paper[] = [
     authors: ["Maria Garcia", "Thomas Moore", "Jennifer Davis"],
     venue: "CVPR",
     year: 2023,
+    keywords: ["Multimodal Learning", "Vision-Language Models", "Cross-Modal Attention", "Image Captioning", "VQA"],
     abstract:
       "We present a novel framework for multimodal learning that effectively combines visual and linguistic information for improved understanding and generation tasks. Our approach uses cross-modal attention mechanisms to align representations across modalities, achieving significant improvements on image captioning, visual question answering, and text-to-image generation benchmarks. We also introduce a new dataset of 100K image-text pairs with fine-grained annotations.",
     relevanceScore: 85,
@@ -157,6 +162,17 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {paper.keywords.map((keyword) => (
+                  <span
+                    key={keyword}
+                    className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                  >
+                    #{keyword}
+                  </span>
+                ))}
+              </div>
+
               <p className="text-sm leading-relaxed text-muted-foreground">{paper.abstract}</p>
 
               <div className="rounded-lg bg-primary/5 p-3">
