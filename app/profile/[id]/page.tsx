@@ -6,14 +6,17 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
   const isSampleProfile = params.id === "sample"
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <ProfileHeader scholarId={params.id} isSample={isSampleProfile} />
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:h-[calc(100vh-12rem)]">
-          <div className="lg:col-span-1 lg:overflow-y-auto lg:pr-4">
+      <div className="mx-auto max-w-[1600px] px-6 py-8 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
+          {/* Left column: Research Profile */}
+          <div className="lg:sticky lg:top-8 lg:self-start">
             <ResearchProfile scholarId={params.id} isSample={isSampleProfile} />
           </div>
-          <div className="lg:col-span-2 lg:overflow-y-auto lg:pl-4">
+
+          {/* Right column: Filters and Papers */}
+          <div className="min-w-0">
             <PaperRecommendations scholarId={params.id} isSample={isSampleProfile} />
           </div>
         </div>

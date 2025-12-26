@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ExternalLink, Mail, TrendingUp } from "lucide-react"
 import { useEffect, useState } from "react"
 import { EmailDialog } from "@/components/email-dialog"
+import { FilterSidebar, type FilterState } from "@/components/filter-sidebar"
 
 interface Paper {
   id: string
@@ -89,6 +90,8 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
   const [loading, setLoading] = useState(true)
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [filteredPapers, setFilteredPapers] = useState<Paper[]>([])
+  const [availableTopics, setAvailableTopics] = useState<string[]>([])
 
   useEffect(() => {
     if (isSample) {
@@ -102,6 +105,28 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
       }, 2000)
     }
   }, [scholarId, isSample])
+
+  useEffect(() => {
+    if (papers.length > 0) {
+      const topics = Array.from(new Set(papers.flatMap((paper) => paper.keywords)))
+      setAvailableTopics(topics)
+      setFilteredPapers(papers)
+    }
+  }, [papers])
+
+  const handleFilterChange = (filters: FilterState) => {
+    let filtered = [...papers]
+
+    // Filter by year range
+    filtered = filtered.filter((paper) => paper.year >= filters.yearRange[0] && paper.year <= filters.yearRange[1])
+
+    // Filter by topics
+    if (filters.topics.length > 0) {
+      filtered = filtered.filter((paper) => filters.topics.some((topic) => paper.keywords.includes(topic)))
+    }
+
+    setFilteredPapers(filtered)
+  }
 
   const handleContactAuthors = (paper: Paper) => {
     setSelectedPaper(paper)
@@ -133,74 +158,92 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Recommended Papers</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          AI-generated recommendations based on research profile ({papers.length} papers found)
-        </p>
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+      {/* Filters Sidebar */}
+      <aside className="lg:sticky lg:top-8 lg:self-start">
+        <FilterSidebar onFilterChange={handleFilterChange} availableTopics={availableTopics} />
+      </aside>
 
-      <div className="space-y-4">
-        {papers.map((paper) => (
-          <Card
-            key={paper.id}
-            className={`transition-all ${selectedPaper?.id === paper.id ? "ring-2 ring-primary" : "hover:border-primary/50"}`}
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <CardTitle className="text-xl leading-tight">{paper.title}</CardTitle>
-                  <CardDescription className="mt-2">
-                    {paper.authors.join(", ")} • {paper.venue} {paper.year}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-primary">{paper.relevanceScore}%</span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {paper.keywords.map((keyword) => (
-                  <span
-                    key={keyword}
-                    className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                  >
-                    #{keyword}
-                  </span>
-                ))}
-              </div>
+      {/* Papers List */}
+      <div className="space-y-6 min-w-0">
+        <div>
+          <h2 className="text-2xl font-bold">Recommended Papers</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            AI-generated recommendations based on research profile ({filteredPapers.length} of {papers.length} papers)
+          </p>
+        </div>
 
-              <p className="text-sm leading-relaxed text-muted-foreground">{paper.abstract}</p>
-
-              <div className="rounded-lg bg-primary/5 p-3">
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">Why this matters:</span> {paper.relevanceReason}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <a href={paper.link} target="_blank" rel="noopener noreferrer" className="gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    View Paper
-                  </a>
-                </Button>
-                <Button
-                  variant={selectedPaper?.id === paper.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleContactAuthors(paper)}
-                  className="gap-2"
-                >
-                  <Mail className="h-4 w-4" />
-                  Contact Authors
-                </Button>
-              </div>
+        {filteredPapers.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">
+                No papers match your current filters. Try adjusting your filter criteria.
+              </p>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          <div className="space-y-4">
+            {filteredPapers.map((paper) => (
+              <Card
+                key={paper.id}
+                className={`transition-all ${selectedPaper?.id === paper.id ? "ring-2 ring-primary" : "hover:border-primary/50"}`}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <CardTitle className="text-xl leading-tight">{paper.title}</CardTitle>
+                      <CardDescription className="mt-2">
+                        {paper.authors.join(", ")} • {paper.venue} {paper.year}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold text-primary">{paper.relevanceScore}%</span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {paper.keywords.map((keyword) => (
+                      <span
+                        key={keyword}
+                        className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                      >
+                        #{keyword}
+                      </span>
+                    ))}
+                  </div>
+
+                  <p className="text-sm leading-relaxed text-muted-foreground">{paper.abstract}</p>
+
+                  <div className="rounded-lg bg-primary/5 p-3">
+                    <p className="text-sm text-foreground">
+                      <span className="font-semibold">Why this matters:</span> {paper.relevanceReason}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={paper.link} target="_blank" rel="noopener noreferrer" className="gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        View Paper
+                      </a>
+                    </Button>
+                    <Button
+                      variant={selectedPaper?.id === paper.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleContactAuthors(paper)}
+                      className="gap-2"
+                    >
+                      <Mail className="h-4 w-4" />
+                      Contact Authors
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {selectedPaper && <EmailDialog paper={selectedPaper} open={emailDialogOpen} onOpenChange={setEmailDialogOpen} />}
