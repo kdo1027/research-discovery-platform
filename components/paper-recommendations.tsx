@@ -3,10 +3,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ExternalLink, Mail, TrendingUp } from "lucide-react"
+import { ExternalLink, Mail, TrendingUp, Sparkles, Pencil, Plus, Trash2, Save, Eye } from "lucide-react"
 import { useEffect, useState } from "react"
 import { EmailDialog } from "@/components/email-dialog"
 import { FilterSidebar, type FilterState } from "@/components/filter-sidebar"
+import { HighlightableText } from "@/components/highlightable-text"
+import { AddPaperDialog } from "@/components/add-paper-dialog"
+import { PdfViewerDialog } from "@/components/pdf-viewer-dialog"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
 
 interface Paper {
   id: string
@@ -19,11 +24,13 @@ interface Paper {
   relevanceScore: number
   relevanceReason: string
   link: string
+  pdfData?: string | null
 }
 
 interface PaperRecommendationsProps {
   scholarId: string
   isSample?: boolean
+  onPapersChange?: (papers: Paper[]) => void
 }
 
 const SAMPLE_PAPERS: Paper[] = [
@@ -85,13 +92,19 @@ const SAMPLE_PAPERS: Paper[] = [
   },
 ]
 
-export function PaperRecommendations({ scholarId, isSample }: PaperRecommendationsProps) {
+export function PaperRecommendations({ scholarId, isSample, onPapersChange }: PaperRecommendationsProps) {
   const [papers, setPapers] = useState<Paper[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
   const [filteredPapers, setFilteredPapers] = useState<Paper[]>([])
   const [availableTopics, setAvailableTopics] = useState<string[]>([])
+  const [isEditingPapers, setIsEditingPapers] = useState(false)
+  const [addPaperDialogOpen, setAddPaperDialogOpen] = useState(false)
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false)
+  const [viewingPaper, setViewingPaper] = useState<Paper | null>(null)
+  const { user } = useAuth()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (isSample) {
@@ -114,6 +127,12 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
     }
   }, [papers])
 
+  useEffect(() => {
+    if (onPapersChange) {
+      onPapersChange(papers)
+    }
+  }, [papers, onPapersChange])
+
   const handleFilterChange = (filters: FilterState) => {
     let filtered = [...papers]
 
@@ -131,6 +150,58 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
   const handleContactAuthors = (paper: Paper) => {
     setSelectedPaper(paper)
     setEmailDialogOpen(true)
+  }
+
+  const handleRemovePaper = (paperId: string) => {
+    setPapers(papers.filter((p) => p.id !== paperId))
+  }
+
+  const handleAddPaper = (newPaper: Paper) => {
+    setPapers([...papers, newPaper])
+    toast({
+      title: "Paper added",
+      description: "Your paper has been added to the recommendations.",
+    })
+  }
+
+  const handleViewPaper = (paper: Paper) => {
+    if (paper.link) {
+      window.open(paper.link, "_blank", "noopener,noreferrer")
+    }
+
+    if (paper.pdfData) {
+      setViewingPaper(paper)
+      setPdfViewerOpen(true)
+    }
+
+    if (!paper.link && !paper.pdfData) {
+      toast({
+        title: "No paper available",
+        description: "This paper has no URL or PDF attached.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSavePapers = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save papers.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const profileKey = `profile_${scholarId}_papers`
+    localStorage.setItem(profileKey, JSON.stringify(papers))
+
+    toast({
+      title: "Papers saved",
+      description: `Successfully saved ${papers.length} papers to your profile.`,
+    })
+
+    setIsEditingPapers(false)
   }
 
   if (loading) {
@@ -166,11 +237,35 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
 
       {/* Papers List */}
       <div className="space-y-6 min-w-0">
-        <div>
-          <h2 className="text-2xl font-bold">Recommended Papers</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            AI-generated recommendations based on research profile ({filteredPapers.length} of {papers.length} papers)
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Recommended Papers</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              AI-generated recommendations based on research profile ({filteredPapers.length} of {papers.length} papers)
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {!isEditingPapers ? (
+              <Button size="sm" variant="outline" onClick={() => setIsEditingPapers(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit Papers
+              </Button>
+            ) : (
+              <>
+                <Button size="sm" onClick={() => setAddPaperDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Paper
+                </Button>
+                <Button size="sm" onClick={handleSavePapers}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Papers
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setIsEditingPapers(false)}>
+                  Done
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {filteredPapers.length === 0 ? (
@@ -196,9 +291,21 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
                         {paper.authors.join(", ")} • {paper.venue} {paper.year}
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
-                      <TrendingUp className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-semibold text-primary">{paper.relevanceScore}%</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+                        <TrendingUp className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-semibold text-primary">{paper.relevanceScore}%</span>
+                      </div>
+                      {isEditingPapers && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleRemovePaper(paper.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -214,21 +321,31 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
                     ))}
                   </div>
 
-                  <p className="text-sm leading-relaxed text-muted-foreground">{paper.abstract}</p>
+                  <div>
+                    <h4 className="font-semibold mb-1 text-sm text-muted-foreground">Abstract</h4>
+                    <HighlightableText text={paper.abstract} className="text-sm text-muted-foreground" />
+                  </div>
 
                   <div className="rounded-lg bg-primary/5 p-3">
-                    <p className="text-sm text-foreground">
-                      <span className="font-semibold">Why this matters:</span> {paper.relevanceReason}
-                    </p>
+                    <h4 className="font-semibold mb-1 text-sm flex items-center gap-2">
+                      <Sparkles className="h-3 w-3 text-primary" />
+                      Why this matters
+                    </h4>
+                    <HighlightableText text={paper.relevanceReason} className="text-sm text-foreground" />
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={paper.link} target="_blank" rel="noopener noreferrer" className="gap-2">
-                        <ExternalLink className="h-4 w-4" />
+                    {(paper.link || paper.pdfData) && (
+                      <Button variant="outline" size="sm" onClick={() => handleViewPaper(paper)} className="gap-2">
+                        {paper.link && !paper.pdfData && <ExternalLink className="h-4 w-4" />}
+                        {paper.pdfData && !paper.link && <Eye className="h-4 w-4" />}
+                        {paper.link && paper.pdfData && <Eye className="h-4 w-4" />}
                         View Paper
-                      </a>
-                    </Button>
+                        {paper.link && paper.pdfData && (
+                          <span className="text-xs text-muted-foreground ml-1">(URL + PDF)</span>
+                        )}
+                      </Button>
+                    )}
                     <Button
                       variant={selectedPaper?.id === paper.id ? "default" : "outline"}
                       size="sm"
@@ -245,6 +362,18 @@ export function PaperRecommendations({ scholarId, isSample }: PaperRecommendatio
           </div>
         )}
       </div>
+
+      <AddPaperDialog open={addPaperDialogOpen} onOpenChange={setAddPaperDialogOpen} onAddPaper={handleAddPaper} />
+
+      {viewingPaper && (
+        <PdfViewerDialog
+          open={pdfViewerOpen}
+          onOpenChange={setPdfViewerOpen}
+          pdfUrl={viewingPaper.pdfData || ""}
+          title={viewingPaper.title}
+          externalLink={viewingPaper.link || undefined}
+        />
+      )}
 
       {selectedPaper && <EmailDialog paper={selectedPaper} open={emailDialogOpen} onOpenChange={setEmailDialogOpen} />}
     </div>

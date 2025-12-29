@@ -20,6 +20,7 @@ interface ProfileData {
 interface ResearchProfileProps {
   scholarId: string
   isSample?: boolean
+  onProfileLoad?: (data: ProfileData) => void
 }
 
 const SAMPLE_PROFILE: ProfileData = {
@@ -38,7 +39,7 @@ const SAMPLE_PROFILE: ProfileData = {
     "Dr. Sarah Chen is a leading researcher in machine learning and artificial intelligence, with a focus on developing novel neural network architectures for natural language understanding. Her work bridges theoretical foundations with practical applications, particularly in low-resource settings and ethical AI deployment. With over 50 publications in top-tier venues and 5,000+ citations, she has made significant contributions to transformer architectures and multimodal learning systems.",
 }
 
-export function ResearchProfile({ scholarId, isSample }: ResearchProfileProps) {
+export function ResearchProfile({ scholarId, isSample, onProfileLoad }: ResearchProfileProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -50,14 +51,20 @@ export function ResearchProfile({ scholarId, isSample }: ResearchProfileProps) {
     if (isSample) {
       setProfile(SAMPLE_PROFILE)
       setLoading(false)
+      if (onProfileLoad) {
+        onProfileLoad(SAMPLE_PROFILE)
+      }
     } else {
       // Simulate API call - in production, this would fetch real data
       setTimeout(() => {
         setProfile(SAMPLE_PROFILE)
         setLoading(false)
+        if (onProfileLoad) {
+          onProfileLoad(SAMPLE_PROFILE)
+        }
       }, 1500)
     }
-  }, [scholarId, isSample])
+  }, [scholarId, isSample, onProfileLoad])
 
   const handleEdit = () => {
     setEditedProfile({ ...profile! })
