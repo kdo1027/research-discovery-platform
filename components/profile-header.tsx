@@ -60,48 +60,49 @@ export function ProfileHeader({ scholarId, isSample, profileData }: ProfileHeade
   }
 
   return (
-    <div className="border-b border-border bg-card">
-      <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
-              <ArrowLeft className="h-5 w-5" />
+    <div className="border-b border-border/40 bg-card/50 backdrop-blur-sm">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 shrink-0" onClick={() => router.push("/")}>
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Research Profile Analysis</h1>
-              <p className="text-sm text-muted-foreground">AI-generated insights and recommendations</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">Research Profile Analysis</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">AI-generated insights and recommendations</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 sm:gap-2">
             {user && (
               <Button
                 variant={isSaved ? "secondary" : "default"}
                 size="sm"
                 onClick={handleSaveProfile}
                 disabled={isSaved}
+                className="gap-2"
               >
                 {isSaved ? (
                   <>
-                    <BookmarkCheck className="h-4 w-4 mr-2" />
-                    Saved
+                    <BookmarkCheck className="h-4 w-4" />
+                    <span className="hidden sm:inline">Saved</span>
                   </>
                 ) : (
                   <>
-                    <Bookmark className="h-4 w-4 mr-2" />
-                    Save Profile
+                    <Bookmark className="h-4 w-4" />
+                    <span className="hidden sm:inline">Save Profile</span>
                   </>
                 )}
               </Button>
             )}
             {!isSample && (
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" asChild className="gap-2">
                 <a
                   href={`https://scholar.google.com/citations?user=${scholarId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="gap-2"
                 >
-                  View on Google Scholar
+                  <span className="hidden sm:inline">View on</span>
+                  <span>Google Scholar</span>
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </Button>

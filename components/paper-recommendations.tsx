@@ -229,46 +229,51 @@ export function PaperRecommendations({ scholarId, isSample, onPapersChange }: Pa
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
-      {/* Filters Sidebar */}
-      <aside className="lg:sticky lg:top-8 lg:self-start">
-        <FilterSidebar onFilterChange={handleFilterChange} availableTopics={availableTopics} />
-      </aside>
-
-      {/* Papers List */}
-      <div className="space-y-6 min-w-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">Recommended Papers</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              AI-generated recommendations based on research profile ({filteredPapers.length} of {papers.length} papers)
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {!isEditingPapers ? (
-              <Button size="sm" variant="outline" onClick={() => setIsEditingPapers(true)}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit Papers
-              </Button>
-            ) : (
-              <>
-                <Button size="sm" onClick={() => setAddPaperDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Paper
-                </Button>
-                <Button size="sm" onClick={handleSavePapers}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Papers
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => setIsEditingPapers(false)}>
-                  Done
-                </Button>
-              </>
-            )}
-          </div>
+    <div className="space-y-6">
+      {/* Header with Edit Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold">Recommended Papers</h2>
+          <p className="text-sm text-muted-foreground">
+            AI-generated recommendations based on research profile ({filteredPapers.length} of {papers.length} papers)
+          </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          {!isEditingPapers ? (
+            <Button size="sm" variant="outline" onClick={() => setIsEditingPapers(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit Papers
+            </Button>
+          ) : (
+            <>
+              <Button size="sm" onClick={() => setAddPaperDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Paper
+              </Button>
+              <Button size="sm" onClick={handleSavePapers}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Papers
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setIsEditingPapers(false)}>
+                Done
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
 
-        {filteredPapers.length === 0 ? (
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr] gap-4 lg:gap-6">
+        {/* Filters Sidebar */}
+        <aside className="order-2 md:order-1">
+          <div className="md:sticky md:top-6">
+            <FilterSidebar onFilterChange={handleFilterChange} availableTopics={availableTopics} />
+          </div>
+        </aside>
+
+        {/* Papers List */}
+        <div className="space-y-4 min-w-0 order-1 md:order-2">
+          {filteredPapers.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">
@@ -361,6 +366,7 @@ export function PaperRecommendations({ scholarId, isSample, onPapersChange }: Pa
             ))}
           </div>
         )}
+        </div>
       </div>
 
       <AddPaperDialog open={addPaperDialogOpen} onOpenChange={setAddPaperDialogOpen} onAddPaper={handleAddPaper} />

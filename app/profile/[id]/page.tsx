@@ -4,24 +4,32 @@ import { ProfileHeader } from "@/components/profile-header"
 import { ResearchProfile } from "@/components/research-profile"
 import { PaperRecommendations } from "@/components/paper-recommendations"
 import { Navigation } from "@/components/navigation"
-import { useState } from "react"
+import { use, useState } from "react"
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
-  const isSampleProfile = params.id === "sample"
+export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const isSampleProfile = id === "sample"
   const [profileData, setProfileData] = useState<any>(null)
   const [papers, setPapers] = useState<any[]>([])
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen flex flex-col bg-background">
       <Navigation />
-      <ProfileHeader scholarId={params.id} isSample={isSampleProfile} profileData={profileData} papers={papers} />
-      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:h-[calc(100vh-12rem)]">
-          <div className="lg:col-span-1 lg:overflow-y-auto lg:pr-4">
-            <ResearchProfile scholarId={params.id} isSample={isSampleProfile} onProfileLoad={setProfileData} />
-          </div>
-          <div className="lg:col-span-2 lg:overflow-y-auto lg:pl-4">
-            <PaperRecommendations scholarId={params.id} isSample={isSampleProfile} onPapersChange={setPapers} />
+      <ProfileHeader scholarId={id} isSample={isSampleProfile} profileData={profileData} />
+      <div className="flex-1 w-full">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr] xl:grid-cols-[400px_1fr]">
+            {/* Left sidebar - Research Profile */}
+            <aside className="order-2 lg:order-1">
+              <div className="lg:sticky lg:top-6">
+                <ResearchProfile scholarId={id} isSample={isSampleProfile} onProfileLoad={setProfileData} />
+              </div>
+            </aside>
+
+            {/* Main content - Paper Recommendations */}
+            <div className="order-1 lg:order-2 min-w-0">
+              <PaperRecommendations scholarId={id} isSample={isSampleProfile} onPapersChange={setPapers} />
+            </div>
           </div>
         </div>
       </div>

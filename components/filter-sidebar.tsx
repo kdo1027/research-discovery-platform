@@ -60,19 +60,19 @@ export function FilterSidebar({ onFilterChange, availableTopics = [] }: FilterSi
     filters.yearRange[0] !== MIN_YEAR || filters.yearRange[1] !== MAX_YEAR || filters.topics.length > 0
 
   return (
-    <Card className="sticky top-6">
-      <CardHeader className="pb-4">
+    <Card className="w-full">
+      <CardHeader className="pb-3 px-4 sm:px-6">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-base sm:text-lg font-semibold">Filters</CardTitle>
           {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-8 px-2">
-              <X className="h-4 w-4 mr-1" />
+            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 px-2 text-xs">
+              <X className="h-3 w-3 mr-1" />
               Clear
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/30">
+      <CardContent className="space-y-5 px-4 sm:px-6 pb-4 max-h-[400px] md:max-h-[calc(100vh-250px)] overflow-y-auto scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent hover:scrollbar-thumb-muted">
         {/* Year Range Filter */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">

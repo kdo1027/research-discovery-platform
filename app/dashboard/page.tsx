@@ -33,29 +33,34 @@ export default function DashboardPage() {
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
-      <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">My Saved Profiles</h1>
-          <p className="text-muted-foreground mt-2">Manage and access your analyzed research profiles</p>
-        </div>
+      <div className="flex-1 w-full">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+          <div className="mb-8 lg:mb-12">
+            <h1 className="text-3xl sm:text-4xl font-bold">My Saved Profiles</h1>
+            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+              Manage and access your analyzed research profiles
+            </p>
+          </div>
 
-        {savedProfiles.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <BookmarkIcon className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No saved profiles yet</h3>
-              <p className="text-muted-foreground mb-4 text-center">
-                Start analyzing research profiles to save them here
-              </p>
-              <Link href="/">
-                <Button>Analyze a Profile</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {savedProfiles.length === 0 ? (
+            <Card className="max-w-2xl mx-auto">
+              <CardContent className="flex flex-col items-center justify-center py-16 sm:py-20 px-6">
+                <div className="rounded-full bg-primary/10 p-4 mb-6">
+                  <BookmarkIcon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 text-center">No saved profiles yet</h3>
+                <p className="text-muted-foreground mb-6 text-center text-sm sm:text-base max-w-md">
+                  Start analyzing research profiles to save them here for quick access
+                </p>
+                <Link href="/">
+                  <Button size="lg">Analyze a Profile</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {savedProfiles.map((profile) => (
               <Card key={profile.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -110,7 +115,8 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
-    </>
+    </div>
   )
 }
