@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Pencil, Save, X, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
+import { profilesApi } from "@/lib/api"
 
 interface ProfileData {
   name: string
@@ -15,6 +16,9 @@ interface ProfileData {
   researchAreas: string[]
   researchTopics: string[]
   summary: string
+  url?: string
+  profileType?: string
+  papers?: any[]
 }
 
 interface ResearchProfileProps {
@@ -55,14 +59,110 @@ export function ResearchProfile({ scholarId, isSample, onProfileLoad }: Research
         onProfileLoad(SAMPLE_PROFILE)
       }
     } else {
-      // Simulate API call - in production, this would fetch real data
-      setTimeout(() => {
-        setProfile(SAMPLE_PROFILE)
-        setLoading(false)
-        if (onProfileLoad) {
-          onProfileLoad(SAMPLE_PROFILE)
+      // Check if scholarId is a saved profile ID (numeric)
+      const isSavedProfileId = /^\d+$/.test(scholarId)
+      
+      if (isSavedProfileId) {
+        // Load saved profile
+        const loadSavedProfile = async () => {
+          try {
+            const result = await profilesApi.get(scholarId)
+            if (result.data && result.data.profile) {
+              const profile = result.data.profile
+              const transformedProfile: ProfileData = {
+                name: profile.name || '',
+                affiliation: profile.affiliation || '',
+                researchAreas: profile.researchAreas || [],
+                researchTopics: profile.researchTopics || [],
+                summary: profile.summary || '',
+                url: profile.url || '',
+                profileType: profile.profileType || 'google-scholar',
+                papers: profile.papers || [],
+              }
+              setProfile(transformedProfile)
+              if (onProfileLoad) {
+                onProfileLoad(transformedProfile)
+              }
+            }
+          } catch (error) {
+            console.error('Error loading saved profile:', error)
+            setProfile(SAMPLE_PROFILE)
+            if (onProfileLoad) {
+              onProfileLoad(SAMPLE_PROFILE)
+            }
+          } finally {
+            setLoading(false)
+          }
         }
-      }, 1500)
+        loadSavedProfile()
+      } else {
+        // Call backend API to analyze profile
+        const analyzeProfile = async () => {
+          try {
+            // Construct profile URL based on scholarId
+            // If scholarId is a URL, decode it; otherwise assume Google Scholar
+            let profileUrl = scholarId
+            if (!scholarId.startsWith('http')) {
+              try {
+                profileUrl = decodeURIComponent(scholarId)
+              } catch {
+                profileUrl = `https://scholar.google.com/citations?user=${scholarId}`
+              }
+            }
+            
+            // Determine profile type from URL
+            let profileType = 'google-scholar'
+            if (profileUrl.includes('researchgate.net')) {
+              profileType = 'researchgate'
+            } else if (profileUrl.includes('orcid.org')) {
+              profileType = 'orcid'
+            } else if (profileUrl.includes('linkedin.com')) {
+              profileType = 'linkedin'
+            }
+            
+            const result = await profilesApi.analyze(profileUrl, profileType)
+            
+            if (result.error || !result.data) {
+              console.error('Failed to analyze profile:', result.error)
+              // Fallback to sample data on error
+              setProfile(SAMPLE_PROFILE)
+              setLoading(false)
+              if (onProfileLoad) {
+                onProfileLoad(SAMPLE_PROFILE)
+              }
+              return
+            }
+            
+            const profileData = result.data.profile
+            const transformedProfile: ProfileData = {
+              name: profileData.name || '',
+              affiliation: profileData.affiliation || '',
+              researchAreas: profileData.researchAreas || [],
+              researchTopics: profileData.researchTopics || [],
+              summary: profileData.summary || '',
+              url: profileData.url || profileUrl,
+              profileType: profileData.profileType || profileType,
+              papers: profileData.papers || [],
+            }
+            
+            setProfile(transformedProfile)
+            if (onProfileLoad) {
+              onProfileLoad(transformedProfile)
+            }
+          } catch (error) {
+            console.error('Error analyzing profile:', error)
+            // Fallback to sample data on error
+            setProfile(SAMPLE_PROFILE)
+            if (onProfileLoad) {
+              onProfileLoad(SAMPLE_PROFILE)
+            }
+          } finally {
+            setLoading(false)
+          }
+        }
+        
+        analyzeProfile()
+      }
     }
   }, [scholarId, isSample, onProfileLoad])
 

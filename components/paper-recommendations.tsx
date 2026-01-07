@@ -12,6 +12,7 @@ import { AddPaperDialog } from "@/components/add-paper-dialog"
 import { PdfViewerDialog } from "@/components/pdf-viewer-dialog"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { profilesApi, recommendationsApi } from "@/lib/api"
 
 interface Paper {
   id: string
@@ -111,11 +112,86 @@ export function PaperRecommendations({ scholarId, isSample, onPapersChange }: Pa
       setPapers(SAMPLE_PAPERS)
       setLoading(false)
     } else {
-      // Simulate API call - in production, this would fetch real recommendations
-      setTimeout(() => {
-        setPapers(SAMPLE_PAPERS)
-        setLoading(false)
-      }, 2000)
+      // Fetch papers from profile analysis or recommendations API
+      const fetchPapers = async () => {
+        try {
+          // Check if scholarId is a saved profile ID (numeric)
+          const isSavedProfileId = /^\d+$/.test(scholarId)
+          
+          if (isSavedProfileId) {
+            // Load papers from saved profile
+            const profileResult = await profilesApi.get(scholarId)
+            if (profileResult.data && profileResult.data.profile.papers) {
+              const papers = profileResult.data.profile.papers.map((paper: any) => ({
+                id: paper.id || String(Math.random()),
+                title: paper.title || '',
+                authors: paper.authors || [],
+                venue: paper.venue || '',
+                year: paper.year || 2024,
+                keywords: paper.keywords || [],
+                abstract: paper.abstract || '',
+                relevanceScore: paper.relevanceScore || 0,
+                relevanceReason: paper.relevanceReason || '',
+                link: paper.link || '',
+                pdfData: paper.pdfData || null,
+              }))
+              setPapers(papers)
+              setLoading(false)
+              return
+            }
+          } else {
+            // Try to get papers from profile analysis
+            let profileUrl = scholarId
+            if (!scholarId.startsWith('http')) {
+              try {
+                profileUrl = decodeURIComponent(scholarId)
+              } catch {
+                profileUrl = `https://scholar.google.com/citations?user=${scholarId}`
+              }
+            }
+            
+            let profileType = 'google-scholar'
+            if (profileUrl.includes('researchgate.net')) {
+              profileType = 'researchgate'
+            } else if (profileUrl.includes('orcid.org')) {
+              profileType = 'orcid'
+            }
+            
+            const profileResult = await profilesApi.analyze(profileUrl, profileType)
+            
+            if (profileResult.data && profileResult.data.profile.papers) {
+              // Transform papers from profile analysis to match Paper interface
+              const papers = profileResult.data.profile.papers.map((paper: any) => ({
+                id: paper.id || paper.paper_id || String(Math.random()),
+                title: paper.title || '',
+                authors: paper.authors || [],
+                venue: paper.venue || paper.topic || '',
+                year: paper.year || 2024,
+                keywords: paper.keywords || [],
+                abstract: paper.abstract || '',
+                relevanceScore: paper.relevanceScore || Math.round((paper.score || 0) * 100),
+                relevanceReason: paper.relevanceReason || paper.relevance_reason || '',
+                link: paper.link || paper.url || '',
+                pdfData: paper.pdfData || null,
+              }))
+              setPapers(papers)
+              setLoading(false)
+              return
+            }
+          }
+          
+          // Fallback: Use sample data
+          setPapers(SAMPLE_PAPERS)
+          setLoading(false)
+        } catch (error) {
+          console.error('Failed to fetch papers:', error)
+          // Fallback to sample data on error
+          setPapers(SAMPLE_PAPERS)
+          setLoading(false)
+        }
+      }
+      
+      fetchPapers()
     }
   }, [scholarId, isSample])
 

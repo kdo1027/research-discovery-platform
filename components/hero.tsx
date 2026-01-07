@@ -14,7 +14,28 @@ export function Hero() {
 
   const handleAnalyze = () => {
     if (url) {
-      router.push(`/profile/sample`)
+      // Extract profile ID from URL or use URL as ID
+      let profileId = url
+      
+      // Extract Google Scholar user ID if it's a Google Scholar URL
+      if (profileType === 'google-scholar' && url.includes('user=')) {
+        const match = url.match(/user=([^&]+)/)
+        if (match) {
+          profileId = match[1]
+        }
+      } else if (profileType === 'orcid' && url.includes('orcid.org/')) {
+        // Extract ORCID ID
+        const match = url.match(/orcid\.org\/([^\/\s]+)/)
+        if (match) {
+          profileId = match[1]
+        }
+      } else {
+        // For other types, use a hash of the URL or the URL itself
+        // Encode URL to make it URL-safe
+        profileId = encodeURIComponent(url)
+      }
+      
+      router.push(`/profile/${profileId}`)
     }
   }
 

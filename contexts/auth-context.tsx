@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import { authApi, profilesApi } from "@/lib/api"
 
 interface User {
   id: string
@@ -44,47 +45,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is logged in (from localStorage for demo)
+    // Check if user is logged in
     const storedUser = localStorage.getItem("user")
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
-      // Load saved profiles for this user
-      const storedProfiles = localStorage.getItem(`profiles_${JSON.parse(storedUser).id}`)
-      if (storedProfiles) {
-        setSavedProfiles(JSON.parse(storedProfiles))
-      }
+    const token = localStorage.getItem("token")
+    
+    if (storedUser && token) {
+      const user = JSON.parse(storedUser)
+      setUser(user)
+      // Load saved profiles from API
+      loadSavedProfiles(token)
     }
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
-    // TODO: Replace with actual API call
-    const mockUser: User = {
-      id: "1",
-      email,
-      name: email.split("@")[0],
+  const loadSavedProfiles = async (token: string) => {
+    try {
+      const result = await profilesApi.list()
+      if (result.data) {
+        setSavedProfiles(result.data.profiles || [])
+      }
+    } catch (error) {
+      console.error("Failed to load profiles:", error)
     }
-    setUser(mockUser)
-    localStorage.setItem("user", JSON.stringify(mockUser))
+  }
 
-    // Load saved profiles
-    const storedProfiles = localStorage.getItem(`profiles_${mockUser.id}`)
-    if (storedProfiles) {
-      setSavedProfiles(JSON.parse(storedProfiles))
+  const login = async (email: string, password: string) => {
+    const result = await authApi.login(email, password)
+    
+    if (result.error || !result.data) {
+      throw new Error(result.error || "Login failed")
     }
+    
+    const { user: userData, access_token } = result.data
+    const user: User = {
+      id: String(userData.id),
+      email: userData.email,
+      name: userData.name || userData.full_name || email.split("@")[0],
+    }
+    
+    setUser(user)
+    localStorage.setItem("user", JSON.stringify(user))
+    localStorage.setItem("token", access_token)
+
+    // Load saved profiles from API
+    await loadSavedProfiles(access_token)
 
     router.push("/dashboard")
   }
 
   const signup = async (email: string, password: string, name: string) => {
-    // TODO: Replace with actual API call
-    const mockUser: User = {
-      id: "1",
-      email,
-      name,
+    const result = await authApi.register(email, password, name)
+    
+    if (result.error || !result.data) {
+      throw new Error(result.error || "Signup failed")
     }
-    setUser(mockUser)
-    localStorage.setItem("user", JSON.stringify(mockUser))
+    
+    const { user: userData, access_token } = result.data
+    const user: User = {
+      id: String(userData.id),
+      email: userData.email,
+      name: userData.name || userData.full_name || name,
+    }
+    
+    setUser(user)
+    localStorage.setItem("user", JSON.stringify(user))
+    localStorage.setItem("token", access_token)
+    
     router.push("/dashboard")
   }
 
@@ -92,38 +118,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setSavedProfiles([])
     localStorage.removeItem("user")
+    localStorage.removeItem("token")
     router.push("/")
   }
 
-  const saveProfile = (profile: Omit<SavedProfile, "id" | "userId" | "savedAt">) => {
+  const saveProfile = async (profile: Omit<SavedProfile, "id" | "userId" | "savedAt">) => {
     if (!user) return
 
-    const newProfile: SavedProfile = {
-      ...profile,
-      id: Date.now().toString(),
-      userId: user.id,
-      savedAt: new Date().toISOString(),
+    const result = await profilesApi.save(profile)
+    
+    if (result.error || !result.data) {
+      console.error("Failed to save profile:", result.error)
+      return
     }
-
+    
+    const newProfile = result.data.profile
     const updatedProfiles = [...savedProfiles, newProfile]
     setSavedProfiles(updatedProfiles)
-    localStorage.setItem(`profiles_${user.id}`, JSON.stringify(updatedProfiles))
   }
 
-  const deleteProfile = (profileId: string) => {
+  const deleteProfile = async (profileId: string) => {
     if (!user) return
 
+    const result = await profilesApi.delete(profileId)
+    
+    if (result.error) {
+      console.error("Failed to delete profile:", result.error)
+      return
+    }
+    
     const updatedProfiles = savedProfiles.filter((p) => p.id !== profileId)
     setSavedProfiles(updatedProfiles)
-    localStorage.setItem(`profiles_${user.id}`, JSON.stringify(updatedProfiles))
   }
 
-  const updateProfile = (profileId: string, updates: Partial<SavedProfile>) => {
+  const updateProfile = async (profileId: string, updates: Partial<SavedProfile>) => {
     if (!user) return
 
-    const updatedProfiles = savedProfiles.map((p) => (p.id === profileId ? { ...p, ...updates } : p))
+    const result = await profilesApi.update(profileId, updates)
+    
+    if (result.error || !result.data) {
+      console.error("Failed to update profile:", result.error)
+      return
+    }
+    
+    const updatedProfile = result.data.profile
+    const updatedProfiles = savedProfiles.map((p) => 
+      p.id === profileId ? updatedProfile : p
+    )
     setSavedProfiles(updatedProfiles)
-    localStorage.setItem(`profiles_${user.id}`, JSON.stringify(updatedProfiles))
   }
 
   return (
