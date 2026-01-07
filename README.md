@@ -1,8 +1,20 @@
 
 https://github.com/user-attachments/assets/7997cb21-6b3a-4c88-9004-305ca7d84ec5
-# Research Discovery Platform
+# Frontend - Research Discovery Platform
+
+> **Note**: This frontend is part of the AI4Research project. See the main [README.md](../README.md) for project overview.
 
 A professional web application that helps researchers discover relevant academic papers by analyzing Google Scholar profiles and generating AI-powered recommendations.
+
+## Integration with AI4Research
+
+This frontend connects to the AI4Research backend API. The backend provides:
+- User authentication and management
+- Paper parsing and storage
+- Research paper recommendations
+- Explainability features
+
+**Backend API**: See `../backend/API_DOCUMENTATION.md` for API endpoints.
 
 ## Features
 

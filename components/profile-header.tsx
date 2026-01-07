@@ -28,7 +28,7 @@ export function ProfileHeader({ scholarId, isSample, profileData }: ProfileHeade
     }
   }, [user, savedProfiles, profileData])
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!user) {
       toast({
         title: "Sign in required",
@@ -41,22 +41,30 @@ export function ProfileHeader({ scholarId, isSample, profileData }: ProfileHeade
 
     if (!profileData) return
 
-    saveProfile({
-      name: profileData.name,
-      affiliation: profileData.affiliation,
-      url: profileData.url || "",
-      profileType: profileData.profileType || "Google Scholar",
-      researchAreas: profileData.researchAreas,
-      researchTopics: profileData.researchTopics,
-      summary: profileData.summary,
-      papers: profileData.papers || [],
-    })
+    try {
+      await saveProfile({
+        name: profileData.name,
+        affiliation: profileData.affiliation,
+        url: profileData.url || `https://scholar.google.com/citations?user=${scholarId}`,
+        profileType: profileData.profileType || "google-scholar",
+        researchAreas: profileData.researchAreas || [],
+        researchTopics: profileData.researchTopics || [],
+        summary: profileData.summary || "",
+        papers: profileData.papers || [],
+      })
 
-    setIsSaved(true)
-    toast({
-      title: "Profile saved",
-      description: "This profile has been added to your dashboard",
-    })
+      setIsSaved(true)
+      toast({
+        title: "Profile saved",
+        description: "This profile has been added to your dashboard",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
